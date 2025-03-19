@@ -1,0 +1,25 @@
+{
+  "config": "baseline",
+  "query": "What are the different types of embeddings?",
+  "results": [
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "41",
+      "chunk": "FKs - but why??? Customers Notice: empLast, empFirst, and empEmail attributes contain duplicated/repeated data. Opens up the possibility of insert or update anomalies. So, put them in a separate table along with empNum and refer back to the new table (becomes the parent table) 42",
+      "similarity": "0.378248035908"
+    },
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "8",
+      "chunk": "Some Categories of DBMSs Key-Value Databases - Everything is a key/value pair - Based on associative array Spatial Databases - Stores data related to 2D/3D locations - Query example: are 2 cars about to collide? 9",
+      "similarity": "0.40700083971"
+    },
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "7",
+      "chunk": "Some Categories of DBMSs Document-Oriented Databases - Organizes and queries data based on the concept of a \u201cdocument\u201d often in JSON - usually considered semi-structured Graph Databases - Organizes data by nodes, edges, labels - Query about paths between nodes and node relationships 8",
+      "similarity": "0.408035457134"
+    }
+  ],
+  "response": " The provided context does not mention any specific type of embeddings. Embeddings are a concept used in machine learning, particularly in natural language processing and computer vision tasks, where the high-dimensional data is transformed into a lower-dimensional space to improve model performance or facilitate computations. Examples of embedding types include word embeddings (word2vec, GloVe), image embeddings (CNN feature vectors), and document embeddings (Doc2Vec). The context provided pertains to databases and database management systems, not machine learning concepts like embeddings."
+}

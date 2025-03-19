@@ -1,6 +1,6 @@
 # Ollama RAG Ingest and Search
 
-A RAG (Retrieval Augmented Generation) system that processes PDF documents and enables semantic search with natural language queries.
+A RAG (Retrieval Augmented Generation) system that processes PDF documents and enables semantic search with natural language queries. This project includes experimental features to compare different configurations of the RAG pipeline.
 
 ## Prerequisites
 
@@ -14,6 +14,7 @@ A RAG (Retrieval Augmented Generation) system that processes PDF documents and e
      ```bash
      ollama pull nomic-embed-text
      ollama pull mistral
+     ollama pull llama2:7b
      ```
 
 2. **Redis Stack**
@@ -39,7 +40,15 @@ A RAG (Retrieval Augmented Generation) system that processes PDF documents and e
 - `src/ingest.py` - Processes PDF files and generates embeddings
 - `src/search.py` - Provides search functionality
 - `src/app.py` - Streamlit web interface
+- `src/config.py` - Configuration management for experiments
+- `src/metrics.py` - Metrics tracking for experiments
+- `src/vector_store.py` - Vector database abstractions
+- `src/embeddings.py` - Embedding model abstractions
+- `src/llm.py` - LLM model abstractions
+- `src/run_experiments.py` - Driver script for running experiments
 - `data/` - Directory containing PDF files to process
+- `metrics/` - Directory for storing experiment metrics
+- `results/` - Directory for storing experiment results
 
 ## Usage
 
@@ -79,6 +88,50 @@ The web interface provides:
 - AI-generated answers
 - System status monitoring
 
+### Running Experiments
+
+The project includes experimental features to compare different configurations:
+
+1. **Chunking Strategies**:
+   - Different chunk sizes (200, 500, 1000 tokens)
+   - Different overlap sizes (0, 50, 100 tokens)
+   - Text preprocessing options
+
+2. **Embedding Models**:
+   - nomic-embed-text
+   - all-MiniLM-L6-v2
+   - all-mpnet-base-v2
+
+3. **Vector Databases**:
+   - Redis Vector DB
+   - Chroma
+
+4. **LLM Models**:
+   - Mistral
+   - Llama 2 7B
+
+To run experiments:
+```bash
+python src/run_experiments.py
+```
+
+This will:
+1. Process documents with different configurations
+2. Run test queries
+3. Record metrics (processing time, memory usage, etc.)
+4. Save results in the `results/` directory
+5. Save metrics in the `metrics/` directory
+
+## Experiment Results
+
+The experiment results include:
+- Processing metrics (time, memory usage)
+- Search metrics (query time, retrieval time, LLM time)
+- Quality metrics (similarity scores)
+- Generated responses
+
+Results are saved in JSON format for easy analysis.
+
 ## Troubleshooting
 
 1. **Ollama Issues**
@@ -106,5 +159,10 @@ The web interface provides:
 - redis
 - numpy
 - PyMuPDF (for PDF processing)
-- sentence-transformers (optional, for alternative embeddings)
-- streamlit (for web interface)
+- sentence-transformers
+- streamlit
+- psutil (for metrics)
+- chromadb
+- pandas
+- matplotlib
+- seaborn

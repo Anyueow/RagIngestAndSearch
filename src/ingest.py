@@ -6,6 +6,12 @@ import numpy as np
 from redis.commands.search.query import Query
 import os
 import fitz
+from typing import List, Dict, Any
+from config import ChunkingConfig, EmbeddingConfig, VectorDBConfig, ExperimentConfig
+from vector_store import create_vector_store
+from embeddings import create_embedding_model
+from metrics import MetricsTracker
+import time
 
 # Initialize Redis connection
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
@@ -86,22 +92,31 @@ def split_text_into_chunks(text, chunk_size=300, overlap=50):
 
 
 # Process all PDF files in a given directory
-def process_pdfs(data_dir):
+def process_pdfs(data_dir, chunking_config=None):
+    """Process all PDF files in a given directory.
+    
+    Args:
+        data_dir (str): Directory containing PDF files
+        chunking_config (ChunkingConfig, optional): Configuration for text chunking
+    """
+    if chunking_config is None:
+        chunking_config = ChunkingConfig(
+            chunk_size=300,
+            overlap=50,
+            preprocessing=[]
+        )
 
     for file_name in os.listdir(data_dir):
         if file_name.endswith(".pdf"):
             pdf_path = os.path.join(data_dir, file_name)
             text_by_page = extract_text_from_pdf(pdf_path)
             for page_num, text in text_by_page:
-                chunks = split_text_into_chunks(text)
-                # print(f"  Chunks: {chunks}")
+                chunks = split_text_into_chunks(text, chunking_config.chunk_size, chunking_config.overlap)
                 for chunk_index, chunk in enumerate(chunks):
-                    # embedding = calculate_embedding(chunk)
                     embedding = get_embedding(chunk)
                     store_embedding(
                         file=file_name,
                         page=str(page_num),
-                        # chunk=str(chunk_index),
                         chunk=str(chunk),
                         embedding=embedding,
                     )
@@ -137,3 +152,94 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+class DocumentProcessor:
+    def __init__(self, config: ExperimentConfig, metrics_tracker: MetricsTracker):
+        self.config = config
+        self.metrics_tracker = metrics_tracker
+        self.vector_store = create_vector_store(config.vector_db)
+        self.embedding_model = create_embedding_model(config.embedding)
+
+    def clear_store(self):
+        """Clear the vector store."""
+        self.vector_store.clear()
+
+    def create_index(self):
+        """Create a new index in the vector store."""
+        # This is currently only needed for Redis
+        if hasattr(self.vector_store, 'create_index'):
+            self.vector_store.create_index()
+
+    def extract_text_from_pdf(self, pdf_path: str) -> List[tuple]:
+        """Extract text from a PDF file."""
+        doc = fitz.open(pdf_path)
+        text_by_page = []
+        for page_num, page in enumerate(doc):
+            text_by_page.append((page_num, page.get_text()))
+        return text_by_page
+
+    def preprocess_text(self, text: str) -> str:
+        """Apply text preprocessing steps."""
+        for step in self.config.chunking.preprocessing:
+            if step == "remove_whitespace":
+                text = " ".join(text.split())
+            elif step == "remove_punctuation":
+                # Add punctuation removal logic here
+                pass
+        return text
+
+    def split_text_into_chunks(self, text: str) -> List[str]:
+        """Split text into chunks based on configuration."""
+        words = text.split()
+        chunks = []
+        for i in range(0, len(words), self.config.chunking.chunk_size - self.config.chunking.overlap):
+            chunk = " ".join(words[i : i + self.config.chunking.chunk_size])
+            chunk = self.preprocess_text(chunk)
+            chunks.append(chunk)
+        return chunks
+
+    def process_pdfs(self, data_dir: str):
+        """Process all PDF files in a given directory."""
+        total_chunks = 0
+        embedding_time = 0
+        indexing_time = 0
+
+        for file_name in os.listdir(data_dir):
+            if file_name.endswith(".pdf"):
+                pdf_path = os.path.join(data_dir, file_name)
+                text_by_page = self.extract_text_from_pdf(pdf_path)
+                
+                for page_num, text in text_by_page:
+                    chunks = self.split_text_into_chunks(text)
+                    total_chunks += len(chunks)
+                    
+                    for chunk_index, chunk in enumerate(chunks):
+                        # Generate embedding
+                        embedding_start = time.time()
+                        embedding = self.embedding_model.get_embedding(chunk)
+                        embedding_time += time.time() - embedding_start
+
+                        # Store in vector database
+                        indexing_start = time.time()
+                        metadata = {
+                            "file": file_name,
+                            "page": str(page_num),
+                            "chunk": chunk,
+                        }
+                        key = f"{file_name}_page_{page_num}_chunk_{chunk_index}"
+                        self.vector_store.store_embedding(key, embedding, metadata)
+                        indexing_time += time.time() - indexing_start
+
+        # Update metrics
+        self.metrics_tracker.end_processing(
+            num_chunks=total_chunks,
+            embedding_time=embedding_time,
+            indexing_time=indexing_time
+        )
+
+def process_documents(config: ExperimentConfig, data_dir: str, metrics_tracker: MetricsTracker):
+    """Main function to process documents with the given configuration."""
+    processor = DocumentProcessor(config, metrics_tracker)
+    processor.clear_store()
+    processor.create_index()
+    processor.process_pdfs(data_dir)

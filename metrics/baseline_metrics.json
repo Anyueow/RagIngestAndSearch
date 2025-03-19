@@ -1,0 +1,34 @@
+{
+  "config_name": "baseline",
+  "processing": {
+    "total_time": 1.88608717918396,
+    "memory_usage_mb": 451.21875,
+    "num_documents": 1,
+    "num_chunks": 0,
+    "embedding_time": 1.8749370574951172,
+    "indexing_time": 0
+  },
+  "search_metrics": [
+    {
+      "query_time": 4.90816593170166,
+      "retrieval_time": 0.03785085678100586,
+      "llm_time": 4.870315074920654,
+      "num_results": 3,
+      "average_similarity": 0.4261098702746667
+    },
+    {
+      "query_time": 6.731848955154419,
+      "retrieval_time": 0.0806279182434082,
+      "llm_time": 6.651221036911011,
+      "num_results": 3,
+      "average_similarity": 0.411140402158
+    },
+    {
+      "query_time": 4.682174921035767,
+      "retrieval_time": 0.10594487190246582,
+      "llm_time": 4.576230049133301,
+      "num_results": 3,
+      "average_similarity": 0.3977614442506667
+    }
+  ]
+}

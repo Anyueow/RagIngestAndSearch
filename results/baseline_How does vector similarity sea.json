@@ -1,0 +1,25 @@
+{
+  "config": "baseline",
+  "query": "How does vector similarity search work?",
+  "results": [
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "9",
+      "chunk": "Some Categories of DBMSs Vector Databases - unit of storage is a vector represent high-dimensional data - highly performant similarity searches - used extensively in LLMs 10",
+      "similarity": "0.302805185318"
+    },
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "66",
+      "chunk": "Natural Join \u25cfGiven: A(R, S, T, U, V) and B(S, V, W, X) \u25cfQuery: \u25cfNotice: A and B both have attributes named S & V. \u25cfResult: \u25cb Schema of resulting relation is where attr(R) returns a set containing the attributes of R - so, attributes used in the implicit join condition are not duplicated in the result \u25cb contains any tuple from A x B where values for attributes S and V are equal \u25cb If A & B have no common attribute names, result is A X B. 67",
+      "similarity": "0.461738407612"
+    },
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "43",
+      "chunk": "Relational Algebra \u25cfRelational Algebra (RA) : a procedural query language for relations that allow us to retrieve information from a relational database \u25cb A query is an operation or set of operations applied to one or more relation instances \u25cb RA is closed, meaning the result/output of each query is another relation \u25cb In RA, order of operations matters \u25cfNot a full-\ufb02edged (turing complete) programming language 44",
+      "similarity": "0.468877613544"
+    }
+  ],
+  "response": " Vector similarity search works by comparing high-dimensional vectors to determine their closeness or similarity. In the context provided, this method is used extensively in Vector Databases, which store data as vectors and are highly performant at performing similarity searches.\n\nThe comparison of these vectors can be done through various distance measures such as Euclidean Distance, Cosine Similarity, or Jaccard Similarity. The resulting similarity score indicates the degree of similarity between the two vectors.\n\nIn your context, it seems that vector similarity search is used in Language Models and Learners (LLMs), but no specific details about how this process works were provided in the given context. For more information on how to implement this in a specific scenario or language model, further research or guidance would be required."
+}

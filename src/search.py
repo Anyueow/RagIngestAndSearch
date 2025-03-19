@@ -5,6 +5,13 @@ from sentence_transformers import SentenceTransformer
 import ollama
 from redis.commands.search.query import Query
 from redis.commands.search.field import VectorField, TextField
+from typing import List, Dict, Any
+import time
+from config import ExperimentConfig
+from vector_store import create_vector_store
+from embeddings import create_embedding_model
+from llm import create_llm
+from metrics import MetricsTracker
 
 
 # Initialize models
@@ -149,6 +156,47 @@ def interactive_search():
 #             "chunk": chunk,
 #         },
 #     )
+
+
+class RAGSearch:
+    def __init__(self, config: ExperimentConfig, metrics_tracker: MetricsTracker):
+        self.config = config
+        self.metrics_tracker = metrics_tracker
+        self.vector_store = create_vector_store(config.vector_db)
+        self.embedding_model = create_embedding_model(config.embedding)
+        self.llm = create_llm(config.llm)
+
+    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        """Search for relevant document chunks."""
+        # Generate query embedding
+        query_start = time.time()
+        query_embedding = self.embedding_model.get_embedding(query)
+        retrieval_time = time.time() - query_start
+
+        # Search vector store
+        results = self.vector_store.search(query_embedding, top_k=top_k)
+
+        # Generate response
+        llm_start = time.time()
+        response = self.llm.generate_response(query, results)
+        llm_time = time.time() - llm_start
+
+        # Record metrics
+        similarities = [float(r['similarity']) for r in results]
+        self.metrics_tracker.record_search(
+            query_time=retrieval_time + llm_time,
+            retrieval_time=retrieval_time,
+            llm_time=llm_time,
+            num_results=len(results),
+            similarities=similarities
+        )
+
+        return results, response
+
+def search_documents(config: ExperimentConfig, query: str, metrics_tracker: MetricsTracker) -> tuple[List[Dict[str, Any]], str]:
+    """Main function to search documents with the given configuration."""
+    searcher = RAGSearch(config, metrics_tracker)
+    return searcher.search(query)
 
 
 if __name__ == "__main__":

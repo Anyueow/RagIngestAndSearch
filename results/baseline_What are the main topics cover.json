@@ -1,0 +1,25 @@
+{
+  "config": "baseline",
+  "query": "What are the main topics covered in the course?",
+  "results": [
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "10",
+      "chunk": "The category for this course\u2026 \u25cfRelational Database Management Systems \u25cbBased on storing data in tables and connections between those tables \u25cbOriginal concept developed in early 70s by EF Codd and colleagues 11",
+      "similarity": "0.418008327484"
+    },
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "1",
+      "chunk": "Reminders - Make sure you can see the course on Gradescope, Campuswire, and Slack - Mini HW00 - Early EC Deadline: Sunday @ 11:59 pm - Regular Deadline: Tuesday @ 11:59 pm 2",
+      "similarity": "0.418699145317"
+    },
+    {
+      "file": "02 - The Relational Model and Rel Algebra - Instructor.pdf",
+      "page": "62",
+      "chunk": "Writing RA Queries 63 Stu_ID Name Year 134 Chul 1 234 Kev 3 332 Sam 2 336 Ashwin 2 Cou_ID Dept Number Prof 332 CS 3345 Lawrimore 221 CS 2341 Fontenot 535 MATH 2339 Norris Students Courses C_ID S_ID Grade 332 234 B 332 332 A 535 336 C 221 134 A 535 332 C 221 332 A 221 336 B Grades What course or courses (dept and number) are taught by Professor Norris?",
+      "similarity": "0.441622138023"
+    }
+  ],
+  "response": " The main topic covered in the course is \"Relational Database Management Systems.\" This topic includes storing data in tables and connections between those tables, which was originally developed in the early 70s by E.F. Codd and his colleagues."
+}
