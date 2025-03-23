@@ -3,75 +3,72 @@ from typing import List, Optional
 
 @dataclass
 class ChunkingConfig:
-    chunk_size: int
-    overlap: int
-    preprocessing: List[str]  # List of preprocessing steps to apply
+    chunk_size: int = 300
+    overlap: int = 50
+    preprocessing: List[str] = None
+
+    def __post_init__(self):
+        if self.preprocessing is None:
+            self.preprocessing = []
 
 @dataclass
 class EmbeddingConfig:
-    name: str
-    model: str
-    dimension: int
-
-@dataclass
-class LLMConfig:
-    name: str
-    model: str
-    temperature: float = 0.7
+    model: str = "nomic-embed-text"
+    dimension: int = 768
 
 @dataclass
 class VectorDBConfig:
-    name: str
-    type: str  # 'redis', 'chroma', or other
-    connection_params: dict
+    type: str = "redis"  # or "chroma"
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 0
+    index_name: str = "embedding_index"
+    doc_prefix: str = "doc:"
+    vector_dim: int = 768
+    distance_metric: str = "COSINE"
+
+@dataclass
+class LLMConfig:
+    model: str = "mistral"
+    temperature: float = 0.7
+    max_tokens: int = 500
 
 @dataclass
 class ExperimentConfig:
     name: str
     chunking: ChunkingConfig
     embedding: EmbeddingConfig
-    llm: LLMConfig
     vector_db: VectorDBConfig
+    llm: LLMConfig
 
-# Available configurations
-CHUNKING_CONFIGS = [
-    ChunkingConfig(chunk_size=200, overlap=0, preprocessing=[]),
-    ChunkingConfig(chunk_size=500, overlap=50, preprocessing=[]),
-    ChunkingConfig(chunk_size=1000, overlap=100, preprocessing=[]),
-]
-
-EMBEDDING_CONFIGS = [
-    EmbeddingConfig(name="nomic-embed-text", model="nomic-embed-text", dimension=768),
-    EmbeddingConfig(name="all-MiniLM-L6-v2", model="sentence-transformers/all-MiniLM-L6-v2", dimension=384),
-    EmbeddingConfig(name="all-mpnet-base-v2", model="sentence-transformers/all-mpnet-base-v2", dimension=768),
-]
-
-LLM_CONFIGS = [
-    LLMConfig(name="mistral", model="mistral:latest"),
-    LLMConfig(name="llama2", model="llama2:7b"),
-]
-
-VECTOR_DB_CONFIGS = [
-    VectorDBConfig(
-        name="redis",
-        type="redis",
-        connection_params={"host": "localhost", "port": 6379, "db": 0}
-    ),
-    VectorDBConfig(
-        name="chroma",
-        type="chroma",
-        connection_params={"persist_directory": "./chroma_db"}
-    ),
-]
-
-# Example experiment configurations
+# Define experiment configurations
 EXPERIMENT_CONFIGS = [
     ExperimentConfig(
         name="baseline",
-        chunking=CHUNKING_CONFIGS[0],
-        embedding=EMBEDDING_CONFIGS[0],
-        llm=LLM_CONFIGS[0],
-        vector_db=VECTOR_DB_CONFIGS[0]
+        chunking=ChunkingConfig(),
+        embedding=EmbeddingConfig(),
+        vector_db=VectorDBConfig(),
+        llm=LLMConfig()
     ),
-    # Add more experiment configurations as needed
+    ExperimentConfig(
+        name="large_chunks",
+        chunking=ChunkingConfig(chunk_size=500, overlap=100),
+        embedding=EmbeddingConfig(),
+        vector_db=VectorDBConfig(),
+        llm=LLMConfig()
+    ),
+    ExperimentConfig(
+        name="llama2",
+        chunking=ChunkingConfig(),
+        embedding=EmbeddingConfig(),
+        vector_db=VectorDBConfig(),
+        llm=LLMConfig(model="llama2:7b")
+    ),
+    ExperimentConfig(
+        name="chroma_db",
+        chunking=ChunkingConfig(),
+        embedding=EmbeddingConfig(),
+        vector_db=VectorDBConfig(type="chroma"),
+        llm=LLMConfig()
+    )
 ] 

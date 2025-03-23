@@ -165,6 +165,24 @@ class RAGSearch:
         self.vector_store = create_vector_store(config.vector_db)
         self.embedding_model = create_embedding_model(config.embedding)
         self.llm = create_llm(config.llm)
+        # Define important keywords for filtering
+        self.keywords = {
+            "database": ["database", "dbms", "sql", "query", "table", "schema", "index"],
+            "relational": ["relational", "relation", "tuple", "attribute", "key", "foreign key"],
+            "algebra": ["algebra", "operation", "join", "select", "project", "union", "intersection"],
+            "normalization": ["normalization", "normal form", "dependency", "decomposition"],
+            "transaction": ["transaction", "acid", "commit", "rollback", "concurrency"]
+        }
+
+    def check_keywords(self, text: str) -> Dict[str, int]:
+        """Check for presence of important keywords in text."""
+        text = text.lower()
+        keyword_counts = {}
+        for category, words in self.keywords.items():
+            count = sum(1 for word in words if word in text)
+            if count > 0:
+                keyword_counts[category] = count
+        return keyword_counts
 
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """Search for relevant document chunks."""
@@ -175,6 +193,21 @@ class RAGSearch:
 
         # Search vector store
         results = self.vector_store.search(query_embedding, top_k=top_k)
+
+        # Check query keywords
+        query_keywords = self.check_keywords(query)
+        
+        # Boost scores for chunks with matching keywords
+        if query_keywords:
+            for result in results:
+                chunk_keywords = json.loads(result.get('keywords', '{}'))
+                matching_keywords = set(query_keywords.keys()) & set(chunk_keywords.keys())
+                if matching_keywords:
+                    # Boost similarity score by 10% for each matching keyword category
+                    result['similarity'] *= (1 + 0.1 * len(matching_keywords))
+
+        # Sort results by boosted similarity score
+        results.sort(key=lambda x: x['similarity'], reverse=True)
 
         # Generate response
         llm_start = time.time()

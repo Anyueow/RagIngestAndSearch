@@ -12,6 +12,7 @@ from vector_store import create_vector_store
 from embeddings import create_embedding_model
 from metrics import MetricsTracker
 import time
+import json
 
 # Initialize Redis connection
 redis_client = redis.Redis(host="localhost", port=6379, db=0)
@@ -159,6 +160,24 @@ class DocumentProcessor:
         self.metrics_tracker = metrics_tracker
         self.vector_store = create_vector_store(config.vector_db)
         self.embedding_model = create_embedding_model(config.embedding)
+        # Define important keywords for filtering
+        self.keywords = {
+            "database": ["database", "dbms", "sql", "query", "table", "schema", "index"],
+            "relational": ["relational", "relation", "tuple", "attribute", "key", "foreign key"],
+            "algebra": ["algebra", "operation", "join", "select", "project", "union", "intersection"],
+            "normalization": ["normalization", "normal form", "dependency", "decomposition"],
+            "transaction": ["transaction", "acid", "commit", "rollback", "concurrency"]
+        }
+
+    def check_keywords(self, text: str) -> Dict[str, int]:
+        """Check for presence of important keywords in text."""
+        text = text.lower()
+        keyword_counts = {}
+        for category, words in self.keywords.items():
+            count = sum(1 for word in words if word in text)
+            if count > 0:
+                keyword_counts[category] = count
+        return keyword_counts
 
     def clear_store(self):
         """Clear the vector store."""
@@ -188,19 +207,28 @@ class DocumentProcessor:
                 pass
         return text
 
-    def split_text_into_chunks(self, text: str) -> List[str]:
-        """Split text into chunks based on configuration."""
+    def split_text_into_chunks(self, text: str) -> List[Dict[str, Any]]:
+        """Split text into chunks based on configuration and check for keywords."""
         words = text.split()
         chunks = []
         for i in range(0, len(words), self.config.chunking.chunk_size - self.config.chunking.overlap):
             chunk = " ".join(words[i : i + self.config.chunking.chunk_size])
             chunk = self.preprocess_text(chunk)
-            chunks.append(chunk)
+            
+            # Check for keywords in the chunk
+            keyword_counts = self.check_keywords(chunk)
+            
+            chunks.append({
+                "text": chunk,
+                "keywords": keyword_counts,
+                "has_keywords": len(keyword_counts) > 0
+            })
         return chunks
 
     def process_pdfs(self, data_dir: str):
         """Process all PDF files in a given directory."""
         total_chunks = 0
+        chunks_with_keywords = 0
         embedding_time = 0
         indexing_time = 0
 
@@ -213,10 +241,13 @@ class DocumentProcessor:
                     chunks = self.split_text_into_chunks(text)
                     total_chunks += len(chunks)
                     
-                    for chunk_index, chunk in enumerate(chunks):
+                    for chunk_index, chunk_data in enumerate(chunks):
+                        if chunk_data["has_keywords"]:
+                            chunks_with_keywords += 1
+                        
                         # Generate embedding
                         embedding_start = time.time()
-                        embedding = self.embedding_model.get_embedding(chunk)
+                        embedding = self.embedding_model.get_embedding(chunk_data["text"])
                         embedding_time += time.time() - embedding_start
 
                         # Store in vector database
@@ -224,7 +255,9 @@ class DocumentProcessor:
                         metadata = {
                             "file": file_name,
                             "page": str(page_num),
-                            "chunk": chunk,
+                            "chunk": chunk_data["text"],
+                            "keywords": json.dumps(chunk_data["keywords"]),
+                            "has_keywords": chunk_data["has_keywords"]
                         }
                         key = f"{file_name}_page_{page_num}_chunk_{chunk_index}"
                         self.vector_store.store_embedding(key, embedding, metadata)
@@ -236,6 +269,12 @@ class DocumentProcessor:
             embedding_time=embedding_time,
             indexing_time=indexing_time
         )
+        
+        # Print keyword statistics
+        print(f"\nChunking Statistics:")
+        print(f"Total chunks: {total_chunks}")
+        print(f"Chunks with keywords: {chunks_with_keywords}")
+        print(f"Percentage with keywords: {(chunks_with_keywords/total_chunks)*100:.2f}%")
 
 def process_documents(config: ExperimentConfig, data_dir: str, metrics_tracker: MetricsTracker):
     """Main function to process documents with the given configuration."""

@@ -40,7 +40,6 @@ def run_experiment(config_name: str, data_dir: str, metrics_tracker: MetricsTrac
             "What are the main topics covered in the course?",
             "How does vector similarity search work?",
             "What are the different types of embeddings?",
-            # Add more test queries as needed
         ]
 
         for query in test_queries:
